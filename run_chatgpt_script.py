@@ -9,7 +9,6 @@ def read_base_prompt(file_path):
     with open(file_path, 'r') as file:
         return file.read()
 
-# Function to get the response from OpenAI
 def get_chatgpt_response(api_key, prompt):
     url = "https://api.openai.com/v1/chat/completions"
     headers = {
@@ -25,21 +24,32 @@ def get_chatgpt_response(api_key, prompt):
     return response.json()['choices'][0]['message']['content']
 
 # Function to execute the bash script returned by OpenAI
-def execute_bash_script(script):
+def execute_bash_script(script, quiet):
     if platform.system() == "Windows":
-        process = subprocess.Popen(script, shell=True)
+        shell = True
+        executable = None
     else:
-        process = subprocess.Popen(script, shell=True, executable='/bin/bash')
-    process.communicate()
+        shell = True
+        executable = '/bin/bash'
+    
+    for line in script.split('\n'):
+        if line.strip():  # skip empty lines
+            if not quiet:
+                print(f"Executing: {line}")
+            process = subprocess.Popen(line, shell=shell, executable=executable)
+            process.communicate()
 
 def main():
     # Read the base prompt
     base_prompt = read_base_prompt('baseprompt.txt')
 
-    # Check for the -p argument
+    # Check for the -p and -q arguments
     print_only = '-p' in sys.argv
+    quiet = '-q' in sys.argv
     if print_only:
         sys.argv.remove('-p')
+    if quiet:
+        sys.argv.remove('-q')
 
     # Get the command line input
     user_input = ' '.join(sys.argv[1:])
@@ -64,7 +74,7 @@ def main():
     if print_only:
         print(response)
     else:
-        execute_bash_script(response)
+        execute_bash_script(response, quiet)
 
 if __name__ == "__main__":
     main()
