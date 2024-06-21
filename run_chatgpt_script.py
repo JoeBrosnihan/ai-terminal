@@ -26,21 +26,20 @@ def get_chatgpt_response(api_key, prompt):
 
 # Function to execute the bash script returned by OpenAI
 def execute_bash_script(script, quiet):
-    if platform.system() == "Windows":
-        executable = None
-    else:
-        executable = '/bin/bash'
-    
     for line in script.split('\n'):
         if line.strip():  # skip empty lines
             if not quiet:
                 print(line)
-            process = subprocess.Popen(line, shell=True, executable=executable)
+            process = subprocess.Popen(line, shell=True)
             process.communicate()
 
 def main():
+    # Get the directory of the current script
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+
     # Read the base prompt
-    base_prompt = read_base_prompt('baseprompt.txt')
+    base_prompt_path = os.path.join(script_dir, 'baseprompt.txt')
+    base_prompt = read_base_prompt(base_prompt_path)
 
     # Check for the -p and -q arguments
     print_only = '-p' in sys.argv

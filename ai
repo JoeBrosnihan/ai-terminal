@@ -1,2 +1,3 @@
 #!/bin/bash
-python run_chatgpt_script.py "$@"
+dir=$(dirname "$0")
+python "$dir/run_chatgpt_script.py" "$@"
