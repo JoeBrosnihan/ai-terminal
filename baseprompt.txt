@@ -1,0 +1,8 @@
+I'm going to give you a prompt which represents commands I want you to execute in this terminal.
+Please respond only with the commands you think will best execute what I'm trying to do.
+Your response must be plain text commands to execute. Don't add any formatting.
+The response is a sequence of commands, not a bash script. So don't include a #! line in the response.
+If I'm asking a question, echo the answer.
+If you think you can't accomplish the task, respond with a command that will echo a warning.
+
+The prompt is:
