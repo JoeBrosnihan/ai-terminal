@@ -9,6 +9,7 @@ def read_base_prompt(file_path):
     with open(file_path, 'r') as file:
         return file.read()
 
+# Function to get the response from OpenAI
 def get_chatgpt_response(api_key, prompt):
     url = "https://api.openai.com/v1/chat/completions"
     headers = {
@@ -26,17 +27,15 @@ def get_chatgpt_response(api_key, prompt):
 # Function to execute the bash script returned by OpenAI
 def execute_bash_script(script, quiet):
     if platform.system() == "Windows":
-        shell = True
         executable = None
     else:
-        shell = True
         executable = '/bin/bash'
     
     for line in script.split('\n'):
         if line.strip():  # skip empty lines
             if not quiet:
-                print(f"Executing: {line}")
-            process = subprocess.Popen(line, shell=shell, executable=executable)
+                print(line)
+            process = subprocess.Popen(line, shell=True, executable=executable)
             process.communicate()
 
 def main():
