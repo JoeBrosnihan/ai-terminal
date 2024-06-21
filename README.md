@@ -1,13 +1,17 @@
 
+# AI Terminal
+
+ Use ChatGPT to execute natural language as terminal commands.
+
+![image](https://github.com/JoeBrosnihan/ai-terminal/assets/9636197/dbcd870e-a2be-4735-8c9f-60a97a5850ac)
+
 ## Usage
 
-ai print hello
-> echo "hello"
-> hello
+`ai say hello`
 
-ai -q print this won't print individual commands as they execute
+`ai -q print this won't print individual commands as they execute`
 
-ai -p this will print a preview of the commands without executing them
+`ai -p this will print a preview of the commands without executing them`
 
 ## Setup
 
