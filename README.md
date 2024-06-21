@@ -7,13 +7,11 @@
 
 ## Usage
 
-ai print hello
-> echo "hello"
-> hello
+`ai say hello`
 
-ai -q print this won't print individual commands as they execute
+`ai -q print this won't print individual commands as they execute`
 
-ai -p this will print a preview of the commands without executing them
+`ai -p this will print a preview of the commands without executing them`
 
 ## Setup
 
