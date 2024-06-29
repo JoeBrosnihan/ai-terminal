@@ -72,8 +72,6 @@ def main():
 
     # Create the ai-summary.sh file
     command_file_path = os.path.join(os.getcwd(), f'ai-{summary}.sh')
-    if not quiet:
-        print(f"ai-{summary}.sh")
     with open(command_file_path, 'w') as command_file:
         command_file.write(f"#!/bin/bash\n# {user_input}\n\n")
 
@@ -99,6 +97,9 @@ def main():
 
     # Execute the ai-summary.sh file
     execute_bash_script_file(command_file_path, quiet)
+
+    # Remove the ai-summary.sh file after execution
+    os.remove(command_file_path)
 
 if __name__ == "__main__":
     main()
