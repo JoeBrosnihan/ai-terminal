@@ -39,13 +39,13 @@ def main():
     base_prompt_path = os.path.join(script_dir, 'baseprompt.txt')
     base_prompt = read_base_prompt(base_prompt_path)
 
-    # Check for the -p and -q arguments
-    print_only = '-p' in sys.argv
+    # Check for the -q and -y arguments
     quiet = '-q' in sys.argv
-    if print_only:
-        sys.argv.remove('-p')
+    confirm = '-y' in sys.argv
     if quiet:
         sys.argv.remove('-q')
+    if confirm:
+        sys.argv.remove('-y')
 
     # Get the command line input or read from stdin
     if len(sys.argv) > 1:
@@ -90,12 +90,15 @@ def main():
         if not quiet:
             print(commands)
 
-    # Print or execute the ai-summary.sh file based on the -p argument
-    if print_only:
-        with open(command_file_path, 'r') as command_file:
-            print(command_file.read())
-    else:
-        execute_bash_script_file(command_file_path, quiet)
+    # Ask for confirmation if -y argument is not provided
+    if not confirm:
+        user_confirmation = input("Do you want to execute the above commands? (y/n): ").strip().lower()
+        if user_confirmation != 'y':
+            print("Execution aborted.")
+            sys.exit(0)
+
+    # Execute the ai-summary.sh file
+    execute_bash_script_file(command_file_path, quiet)
 
 if __name__ == "__main__":
     main()
