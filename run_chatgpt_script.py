@@ -30,6 +30,7 @@ def execute_bash_script_file(file_path, quiet):
         subprocess.run(['sh', '-x', file_path])
     else:
         subprocess.run(['sh', file_path])
+
 def main():
     # Get the directory of the current script
     script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -46,8 +47,11 @@ def main():
     if quiet:
         sys.argv.remove('-q')
 
-    # Get the command line input
-    user_input = ' '.join(sys.argv[1:])
+    # Get the command line input or read from stdin
+    if len(sys.argv) > 1:
+        user_input = ' '.join(sys.argv[1:])
+    else:
+        user_input = sys.stdin.read().strip()
 
     # Combine the base prompt with the user input
     full_prompt = f"{base_prompt}\n{user_input}"
