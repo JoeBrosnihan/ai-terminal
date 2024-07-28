@@ -10,7 +10,7 @@ def read_base_prompt(file_path):
         return file.read()
 
 # Function to get the response from OpenAI
-def get_chatgpt_response(api_key, prompt):
+def get_chatgpt_response(api_key, conversation):
     url = "https://api.openai.com/v1/chat/completions"
     headers = {
         "Content-Type": "application/json",
@@ -18,18 +18,18 @@ def get_chatgpt_response(api_key, prompt):
     }
     data = {
         "model": "gpt-4",
-        "messages": [{"role": "user", "content": prompt}]
+        "messages": conversation
     }
     response = requests.post(url, headers=headers, json=data)
     response.raise_for_status()
     return response.json()['choices'][0]['message']['content']
 
-# Function to execute the bash script file
+# Function to execute the bash script file and capture the output
 def execute_bash_script_file(file_path, quiet):
+    result = subprocess.run(['sh', file_path], capture_output=True, text=True)
     if not quiet:
-        subprocess.run(['sh', '-x', file_path])
-    else:
-        subprocess.run(['sh', file_path])
+        print(result.stdout)
+    return result.stdout
 
 def main():
     # Get the directory of the current script
@@ -53,8 +53,9 @@ def main():
     else:
         user_input = sys.stdin.read().strip()
 
-    # Combine the base prompt with the user input
-    full_prompt = f"{base_prompt}\n{user_input}"
+    # Initialize the conversation with the base prompt
+    conversation = [{"role": "user", "content": base_prompt}]
+    conversation.append({"role": "user", "content": user_input})
 
     # Get the API key from the environment variable
     api_key = os.getenv('OPENAI_API_KEY')
@@ -62,44 +63,52 @@ def main():
         print("Error: OPENAI_API_KEY environment variable is not set.")
         sys.exit(1)
 
-    # Get the summary of the input command
-    summary_prompt = f"Give a unix-style file name, 15 characters or less without extension, prefer - over _ replacing spaces, summarizing this command:\n{user_input}"
-    try:
-        summary = get_chatgpt_response(api_key, summary_prompt)
-    except requests.exceptions.RequestException as e:
-        print(f"Error: {e}")
-        sys.exit(1)
+    while True:
+        # Get the commands to execute
+        try:
+            response = get_chatgpt_response(api_key, conversation)
+        except requests.exceptions.RequestException as e:
+            print(f"Error: {e}")
+            sys.exit(1)
 
-    # Create the ai-summary.sh file
-    command_file_path = os.path.join(os.getcwd(), f'ai-{summary}.sh')
-    with open(command_file_path, 'w') as command_file:
-        command_file.write(f"#!/bin/bash\n# {user_input}\n\n")
+        # Append the response to the conversation
+        conversation.append({"role": "system", "content": response})
 
-    # Get the commands to execute
-    try:
-        commands = get_chatgpt_response(api_key, full_prompt)
-    except requests.exceptions.RequestException as e:
-        print(f"Error: {e}")
-        sys.exit(1)
+        # Parse the response and execute if needed
+        if response.startswith("== EXECUTE ==") and response.endswith("== END =="):
+            commands_to_execute = response[len("== EXECUTE =="):-len("== END ==")].strip()
+            command_file_path = os.path.join(os.getcwd(), 'ai-temp.sh')
+            with open(command_file_path, 'w') as command_file:
+                command_file.write(f"#!/bin/bash\n{commands_to_execute}")
 
-    # Write the commands and print if not quiet
-    with open(command_file_path, 'a') as command_file:
-        command_file.write(commands)
-        if not quiet:
-            print(commands)
+            print(commands_to_execute)
 
-    # Ask for confirmation if -y argument is not provided
-    if not confirm:
-        user_confirmation = input("Do you want to execute the above commands? (y/n): ").strip().lower()
-        if user_confirmation != 'y':
-            print("Execution aborted.")
-            sys.exit(0)
+            # Ask for confirmation if -y argument is not provided
+            if not confirm:
+                user_confirmation = input("Execute? (y/n): ").strip().lower()
+                if user_confirmation != 'y':
+                    print("Execution aborted.")
+                    sys.exit(0)
 
-    # Execute the ai-summary.sh file
-    execute_bash_script_file(command_file_path, quiet)
+            # Execute the ai-temp.sh file and capture the output
+            output = execute_bash_script_file(command_file_path, quiet)
 
-    # Remove the ai-summary.sh file after execution
-    os.remove(command_file_path)
+            # Remove the ai-temp.sh file after execution
+            os.remove(command_file_path)
+
+            # Append the output to the conversation as a user message
+            conversation.append({"role": "user", "content": output})
+        elif response.startswith("== CHAT ==") and response.endswith("== END =="):
+            chat_message = response[len("== CHAT =="):-len("== END ==")].strip()
+            print(chat_message)
+            user_response = input().strip()
+            conversation.append({"role": "user", "content": user_response})
+        elif response.startswith("== DONE =="):
+            print("Chat session ended.")
+            break
+        else:
+            print("No executable commands found in the response.")
+            break
 
 if __name__ == "__main__":
     main()
